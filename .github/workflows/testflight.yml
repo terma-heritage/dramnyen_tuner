@@ -30,7 +30,7 @@ jobs:
       - name: Set up signing (cert + profile auto-created via the API key)
         run: |
           keychain initialize
-          app-store-connect create-bundle-id "$BUNDLE_ID" --name "Dramnyen Tuner" --platform IOS || true
+          app-store-connect bundle-ids create "$BUNDLE_ID" --name "Dramnyen Tuner" --platform IOS || true
           app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
           keychain add-certificates
           xcode-project use-profiles
