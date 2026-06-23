@@ -13,6 +13,7 @@ jobs:
       APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_API_ISSUER }}
       APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_API_KEY_ID }}
       APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_API_KEY }}
+      CERTIFICATE_PRIVATE_KEY: ${{ secrets.CERTIFICATE_PRIVATE_KEY }}
       BUNDLE_ID: net.termaheritage.dramnyenTuner
     steps:
       - uses: actions/checkout@v4
@@ -31,7 +32,7 @@ jobs:
         run: |
           keychain initialize
           app-store-connect bundle-ids create "$BUNDLE_ID" --name "Dramnyen Tuner" --platform IOS || true
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --certificate-key @env:CERTIFICATE_PRIVATE_KEY --create
           keychain add-certificates
           xcode-project use-profiles
 
