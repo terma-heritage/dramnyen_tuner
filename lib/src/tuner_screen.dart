@@ -64,11 +64,20 @@ class _TunerScreenState extends State<TunerScreen> {
                 children: [
                   _topBar(context),
                   const Spacer(flex: 2),
-                  _bigReadout(r, color, _c.inTune),
-                  const SizedBox(height: 6),
-                  _centsLine(r),
-                  const SizedBox(height: 14),
-                  ArcGauge(cents: r?.cents ?? 0, color: color, active: has, inTune: _c.inTune),
+                  // Fade the note + needle while we hold the last pluck on screen.
+                  AnimatedOpacity(
+                    opacity: _c.holding ? 0.42 : 1.0,
+                    duration: const Duration(milliseconds: 450),
+                    child: Column(
+                      children: [
+                        _bigReadout(r, color, _c.inTune),
+                        const SizedBox(height: 6),
+                        _centsLine(r),
+                        const SizedBox(height: 14),
+                        ArcGauge(cents: r?.cents ?? 0, color: color, active: has, inTune: _c.inTune),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   _status(r, color),
                   const Spacer(flex: 2),
@@ -192,12 +201,17 @@ class _TunerScreenState extends State<TunerScreen> {
       text = 'Pluck a dramnyen string';
     } else if (_c.inTune) {
       text = '✓  In tune';
+    } else if (_c.locked == null) {
+      // Free mode: there's no chosen target, so don't bark tighten/loosen —
+      // identify the note and point to the tuning action instead.
+      text = 'Tap La · Re · So to tune this string';
     } else {
       text = r.cents < 0 ? 'Tighten a little' : 'Loosen a little';
     }
+    final showColor = (r != null && (_c.inTune || _c.locked != null)) || !_c.listening;
     return SizedBox(
       height: 20,
-      child: Text(text, style: TextStyle(color: r != null || !_c.listening ? color : _muted, fontSize: 15, fontWeight: FontWeight.w500)),
+      child: Text(text, style: TextStyle(color: showColor ? color : _muted, fontSize: 15, fontWeight: FontWeight.w500)),
     );
   }
 

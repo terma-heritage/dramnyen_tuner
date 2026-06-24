@@ -31,6 +31,12 @@ class TunerController extends ChangeNotifier {
   bool inTune = false;
   bool _wasInTune = false;
 
+  /// After a pluck decays we keep the last reading on screen briefly (needle
+  /// frozen, dimmed) so the player can actually read it instead of it vanishing.
+  bool holding = false;
+  double _lastReadingT = -100;
+  static const double _holdSeconds = 1.6;
+
   /// Concert-pitch reference. 440 Hz is standard; "tune to your own La" and the
   /// A= stepper both move this. Everything else scales from it.
   double referenceA = 440.0;
@@ -111,6 +117,8 @@ class TunerController extends ChangeNotifier {
     reading = null;
     inTune = false;
     _wasInTune = false;
+    holding = false;
+    _lastReadingT = -100;
     level = 0;
     notifyListeners();
   }
@@ -133,15 +141,24 @@ class TunerController extends ChangeNotifier {
       final t = _consumed / sampleRate;
       final r = _engine.process(window, t, lockedTarget: locked);
       level = _engine.level;
-      if (r == null) {
-        reading = null;
-        inTune = false;
-        _wasInTune = false;
-      } else {
+      if (r != null) {
         reading = r;
+        _lastReadingT = t;
+        holding = false;
         inTune = r.cents.abs() <= 5;
         if (inTune && !_wasInTune) HapticFeedback.mediumImpact();
         _wasInTune = inTune;
+      } else if (reading != null) {
+        // Pluck decayed: hold the last reading (and its needle) for a moment,
+        // then let it clear. inTune is left frozen so the glow lingers too.
+        if (t - _lastReadingT <= _holdSeconds) {
+          holding = true;
+        } else {
+          reading = null;
+          holding = false;
+          inTune = false;
+          _wasInTune = false;
+        }
       }
       _buf.removeRange(0, _hop);
       processed = true;
