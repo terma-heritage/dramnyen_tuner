@@ -3,7 +3,7 @@
 <plist version="1.0">
 	<dict>
 		<key>NSMicrophoneUsageDescription</key>
-		<string>Dramnyen Tuner listens through the microphone to detect the pitch of your strings.</string>
+		<string>Dranyen listens through the microphone to detect the pitch of your strings.</string>
 		<key>ITSAppUsesNonExemptEncryption</key>
 		<false/>
 		<key>CADisableMinimumFrameDurationOnPhone</key>

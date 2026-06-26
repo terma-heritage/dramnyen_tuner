@@ -117,6 +117,10 @@ class _TunerScreenState extends State<TunerScreen> with SingleTickerProviderStat
                   const SizedBox(height: 10),
                   _status(r, color),
                   const Spacer(flex: 2),
+                  Text('Tibetan Standard Tuning',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.spaceGrotesk(color: _muted, fontSize: 11, letterSpacing: 0.4)),
+                  const SizedBox(height: 8),
                   _coursePills(r),
                   const SizedBox(height: 16),
                   if (_c.listening) _levelBar(),
@@ -262,7 +266,7 @@ class _TunerScreenState extends State<TunerScreen> with SingleTickerProviderStat
         Text('Dranyen Tuner',
             style: GoogleFonts.spaceGrotesk(color: _ink, fontSize: 30, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
         const SizedBox(height: 6),
-        Text('སྒྲ་སྙན་སྒྲ་སྒྲིག', style: const TextStyle(color: _gold, fontSize: 22, height: 1.4)),
+        Text('སྒྲ་སྙན་སྒྲ་བསྒྲིག', style: const TextStyle(color: _gold, fontSize: 22, height: 1.4)),
       ],
     );
   }
@@ -288,27 +292,33 @@ class _TunerScreenState extends State<TunerScreen> with SingleTickerProviderStat
   }
 
   Widget _bigReadout(TunerReading? r, Color color, bool inTune) {
+    final note = r?.note;
+    final locked = _c.locked != null;
+    // Master's guidance: in free play (no course locked), show the absolute
+    // pitch (A2, E3 …) and NOT the Do·Re·Mi solfège — solfège only appears once
+    // the player locks a La · Re · So course to tune toward it.
+    final hero = note == null ? '—' : (locked ? note.solfege : note.pitch);
+    final beside = (note != null && locked) ? note.pitch : null;
     return AnimatedScale(
       scale: inTune ? 1.05 : 1.0,
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOut,
       child: Column(
         children: [
-          // Numbered-notation digit, small, on top.
+          // Numbered-notation digit — only meaningful once a course is locked.
           SizedBox(
             height: 20,
-            child: Text(r?.note?.number ?? '',
+            child: Text(locked ? (note?.number ?? '') : '',
                 style: GoogleFonts.spaceGrotesk(color: _muted, fontSize: 16, fontWeight: FontWeight.w500)),
           ),
           const SizedBox(height: 2),
-          // Big solfège name is the hero, with the Western pitch beside it.
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                r?.note?.solfege ?? '—',
+                hero,
                 style: GoogleFonts.spaceGrotesk(
                   color: color,
                   fontSize: 74,
@@ -317,9 +327,9 @@ class _TunerScreenState extends State<TunerScreen> with SingleTickerProviderStat
                   shadows: inTune ? [Shadow(color: color.withValues(alpha: 0.55), blurRadius: 28)] : null,
                 ),
               ),
-              if (r?.note != null) ...[
+              if (beside != null) ...[
                 const SizedBox(width: 10),
-                Text(r!.note!.pitch, style: GoogleFonts.spaceGrotesk(color: _idle, fontSize: 22)),
+                Text(beside, style: GoogleFonts.spaceGrotesk(color: _idle, fontSize: 22)),
               ],
             ],
           ),
@@ -340,14 +350,13 @@ class _TunerScreenState extends State<TunerScreen> with SingleTickerProviderStat
     String text;
     if (!_c.listening) {
       text = 'Tap Start to begin';
+    } else if (_c.locked == null) {
+      // Free mode: tell the player exactly how to choose a course to tune.
+      text = 'Tap La · Re · So to tune a string';
     } else if (r == null) {
-      text = 'Pluck a dramnyen string';
+      text = 'Play the ${_c.locked!.solfege} string';
     } else if (_c.inTune) {
       text = '✓  In tune';
-    } else if (_c.locked == null) {
-      // Free mode: there's no chosen target, so don't bark tighten/loosen —
-      // identify the note and point to the tuning action instead.
-      text = 'Tap La · Re · So to tune this string';
     } else {
       text = r.cents < 0 ? 'Tighten a little' : 'Loosen a little';
     }
@@ -360,8 +369,11 @@ class _TunerScreenState extends State<TunerScreen> with SingleTickerProviderStat
   }
 
   Widget _coursePills(TunerReading? r) {
+    const pos = ['top', 'middle', 'bottom']; // La · Re · So → string position
     return Row(
-      children: openStrings.map((n) {
+      children: openStrings.asMap().entries.map((entry) {
+        final i = entry.key;
+        final n = entry.value;
         final isLocked = _c.locked?.solfege == n.solfege;
         final isDetected = _c.locked == null && _c.listening && r?.note?.solfege == n.solfege;
         final highlight = isLocked || isDetected;
@@ -389,7 +401,8 @@ class _TunerScreenState extends State<TunerScreen> with SingleTickerProviderStat
                       style: GoogleFonts.spaceGrotesk(
                           color: highlight ? accent : const Color(0xFFB6BAC2), fontSize: 14, fontWeight: FontWeight.w500)),
                   const SizedBox(height: 2),
-                  Text(n.pitch, style: GoogleFonts.spaceMono(color: _muted, fontSize: 11)),
+                  Text('${pos[i]} · ${n.pitch}',
+                      style: GoogleFonts.spaceGrotesk(color: _muted, fontSize: 10.5, letterSpacing: 0.2)),
                 ]),
               ),
             ),
