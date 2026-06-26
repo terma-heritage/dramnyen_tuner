@@ -27,7 +27,8 @@ class _Str {
 
 class _DranyenPlayerScreenState extends State<DranyenPlayerScreen>
     with SingleTickerProviderStateMixin {
-  static const Map<String, double> _courseX = {'la': 0.25, 're': 0.53, 'so': 0.78};
+  // Right-aligned so the left edge is free to grip the device like a neck.
+  static const Map<String, double> _courseX = {'la': 0.36, 're': 0.64, 'so': 0.88};
   static const double _pairGap = 12;
   static const List<double> _fretCents = [0, 200, 300]; // by fret level, for la & re
 
@@ -131,7 +132,7 @@ class _DranyenPlayerScreenState extends State<DranyenPlayerScreen>
 
   String _courseAtX(double dx, double w) {
     final f = dx / w;
-    return f < 0.39 ? 'la' : (f < 0.655 ? 're' : 'so');
+    return f < 0.50 ? 'la' : (f < 0.76 ? 're' : 'so');
   }
 
   void _sweep(Offset local, double w, double h, double zoneTop) {
@@ -171,15 +172,15 @@ class _DranyenPlayerScreenState extends State<DranyenPlayerScreen>
                 child: CustomPaint(painter: _StringsPainter(_strings, _pairGap, _ctrl)),
               ),
               // Open-course labels across the top.
-              _openLabel(w, h, 'La', 'B2 · top', 0.25),
-              _openLabel(w, h, 'Re', 'E3 · middle', 0.53),
-              _openLabel(w, h, 'So', 'A2 · bottom', 0.78),
-              // Separate, large fret notes — La: Ti·Do, Re: Mi·Fa. So is fretless.
-              _fretButton(w, h, 'la', 2, 'Do', 0.25, 0.14),
-              _fretButton(w, h, 're', 2, 'Fa', 0.53, 0.14),
-              _fretButton(w, h, 'la', 1, 'Ti', 0.25, 0.275),
-              _fretButton(w, h, 're', 1, 'Mi', 0.53, 0.275),
-              _droneTag(w, h, 0.78, 0.205),
+              _openLabel(w, h, 'La', 'B2 · top', 0.36),
+              _openLabel(w, h, 'Re', 'E3 · middle', 0.64),
+              _openLabel(w, h, 'So', 'A2 · bottom', 0.88),
+              // Large fret notes — Ti·Mi on top (fret 1), Do·Fa below (fret 2).
+              _fretButton(w, h, 'la', 1, 'Ti', 0.36, 0.135),
+              _fretButton(w, h, 're', 1, 'Mi', 0.64, 0.135),
+              _fretButton(w, h, 'la', 2, 'Do', 0.36, 0.275),
+              _fretButton(w, h, 're', 2, 'Fa', 0.64, 0.275),
+              _droneTag(w, h, 0.88, 0.205),
               Positioned(
                 left: 14, right: 14, top: zoneTop,
                 child: SizedBox(height: 2, child: CustomPaint(painter: _DashedLine())),
@@ -226,7 +227,7 @@ class _DranyenPlayerScreenState extends State<DranyenPlayerScreen>
   // sets that string's fret; strum below to sound the fretted note.
   Widget _fretButton(double w, double h, String course, int level, String note, double cx, double topFrac) {
     final on = _fretLevel[course] == level;
-    const bw = 80.0, bh = 56.0;
+    const bw = 78.0, bh = 76.0; // taller for an easier press
     return Positioned(
       left: w * cx - bw / 2,
       top: h * topFrac,
@@ -295,7 +296,8 @@ class _StringsPainter extends CustomPainter {
     final H = size.height;
     const int N = 26;
     for (final s in strings) {
-      final x = size.width * s.xFrac + (s.side == 1 ? pairGap : 0);
+      // Each course is a double string — centre the pair on its course x.
+      final x = size.width * s.xFrac + (s.side == 1 ? pairGap / 2 : -pairGap / 2);
       if (s.active) {
         final amp = s.amp0 * math.exp(-s.t * 3.1);
         final osc = math.sin(s.t * 2 * math.pi * 9);
