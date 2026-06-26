@@ -27,17 +27,14 @@ class _Str {
 
 class _DranyenPlayerScreenState extends State<DranyenPlayerScreen>
     with SingleTickerProviderStateMixin {
-  static const Map<String, double> _courseX = {'la': 0.47, 're': 0.66, 'so': 0.85};
+  static const Map<String, double> _courseX = {'la': 0.25, 're': 0.53, 'so': 0.78};
   static const double _pairGap = 12;
   static const List<double> _fretCents = [0, 200, 300]; // by fret level, for la & re
-  static const double _bendTau = 0.005; // glide time constant — small = quick, subtle bend
 
   final SoLoud _soloud = SoLoud.instance;
   final Map<String, AudioSource> _src = {};
   final Map<String, SoundHandle?> _handle = {'la': null, 're': null, 'so': null};
-  final Map<String, double> _curSpeed = {'la': 1, 're': 1, 'so': 1};
-  final Map<String, double> _tgtSpeed = {'la': 1, 're': 1, 'so': 1};
-  int _fret = 0; // 0 open · 1 ti/mi · 2 do/fa
+  final Map<String, int> _fretLevel = {'la': 0, 're': 0}; // per-string fret; So is fretless
   bool _ready = false;
   bool _audioOk = true;
 
@@ -97,20 +94,10 @@ class _DranyenPlayerScreenState extends State<DranyenPlayerScreen>
       str.t += dt;
       if (str.amp0 * math.exp(-str.t * 3.1) < 0.5) str.active = false;
     }
-    // subtle live pitch bend toward the held fret
-    for (final c in ['la', 're']) {
-      final h = _handle[c];
-      if (h == null || !_soloud.getIsValidVoiceHandle(h)) continue;
-      final cur = _curSpeed[c]!, tgt = _tgtSpeed[c]!;
-      if ((cur - tgt).abs() < 0.0004) continue;
-      final next = cur + (tgt - cur) * math.min(1.0, dt / _bendTau);
-      _curSpeed[c] = next;
-      _soloud.setRelativePlaySpeed(h, next);
-    }
   }
 
   double _speedFor(String c) =>
-      c == 'so' ? 1.0 : math.pow(2, _fretCents[_fret] / 1200).toDouble();
+      c == 'so' ? 1.0 : math.pow(2, _fretCents[_fretLevel[c] ?? 0] / 1200).toDouble();
 
   void _pluck(String c, double strength, double py) {
     if (!_ready) return;
@@ -119,8 +106,6 @@ class _DranyenPlayerScreenState extends State<DranyenPlayerScreen>
     final old = _handle[c];
     if (old != null && _soloud.getIsValidVoiceHandle(old)) _soloud.stop(old);
     final sp = _speedFor(c);
-    _curSpeed[c] = sp;
-    _tgtSpeed[c] = sp;
     final h = _soloud.play(_src[c]!);
     _soloud.setRelativePlaySpeed(h, sp);
     _handle[c] = h;
@@ -137,17 +122,16 @@ class _DranyenPlayerScreenState extends State<DranyenPlayerScreen>
     }
   }
 
-  // Holding a fret bar bends any ringing La/Re string and sets the next strum's note.
-  void _applyFret(int level) {
-    setState(() => _fret = level);
-    for (final c in ['la', 're']) {
-      _tgtSpeed[c] = _speedFor(c);
-    }
+  // Holding a fret sets the note the next strum of THAT string will play. No
+  // live bend/slide — a strum sounds the fretted pitch directly, and releasing
+  // a fret leaves any ringing note untouched (it just decays).
+  void _setFret(String course, int level) {
+    setState(() => _fretLevel[course] = level);
   }
 
   String _courseAtX(double dx, double w) {
     final f = dx / w;
-    return f < 0.565 ? 'la' : (f < 0.755 ? 're' : 'so');
+    return f < 0.39 ? 'la' : (f < 0.655 ? 're' : 'so');
   }
 
   void _sweep(Offset local, double w, double h, double zoneTop) {
@@ -186,11 +170,16 @@ class _DranyenPlayerScreenState extends State<DranyenPlayerScreen>
               Positioned.fill(
                 child: CustomPaint(painter: _StringsPainter(_strings, _pairGap, _ctrl)),
               ),
-              _fretBar(w, h, 1, 'ti', 'mi', 0.21),
-              _fretBar(w, h, 2, 'do', 'fa', 0.39),
-              _label(w, h, 'la', 0.47),
-              _label(w, h, 're', 0.66),
-              _label(w, h, 'so', 0.85),
+              // Open-course labels across the top.
+              _openLabel(w, h, 'La', 'B2 · top', 0.25),
+              _openLabel(w, h, 'Re', 'E3 · middle', 0.53),
+              _openLabel(w, h, 'So', 'A2 · bottom', 0.78),
+              // Separate, large fret notes — La: Ti·Do, Re: Mi·Fa. So is fretless.
+              _fretButton(w, h, 'la', 2, 'Do', 0.25, 0.14),
+              _fretButton(w, h, 're', 2, 'Fa', 0.53, 0.14),
+              _fretButton(w, h, 'la', 1, 'Ti', 0.25, 0.275),
+              _fretButton(w, h, 're', 1, 'Mi', 0.53, 0.275),
+              _droneTag(w, h, 0.78, 0.205),
               Positioned(
                 left: 14, right: 14, top: zoneTop,
                 child: SizedBox(height: 2, child: CustomPaint(painter: _DashedLine())),
@@ -233,39 +222,62 @@ class _DranyenPlayerScreenState extends State<DranyenPlayerScreen>
     );
   }
 
-  Widget _fretBar(double w, double h, int level, String l, String r, double top) {
-    final on = _fret == level;
+  // One large, separate fret note button on a single string. Press-and-hold
+  // sets that string's fret; strum below to sound the fretted note.
+  Widget _fretButton(double w, double h, String course, int level, String note, double cx, double topFrac) {
+    final on = _fretLevel[course] == level;
+    const bw = 80.0, bh = 56.0;
     return Positioned(
-      left: w * 0.41, width: w * 0.31, top: h * top, height: 64,
+      left: w * cx - bw / 2,
+      top: h * topFrac,
+      width: bw,
+      height: bh,
       child: Listener(
         behavior: HitTestBehavior.opaque,
-        onPointerDown: (_) => _applyFret(level),
-        onPointerUp: (_) { if (_fret == level) _applyFret(0); },
-        onPointerCancel: (_) { if (_fret == level) _applyFret(0); },
+        onPointerDown: (_) => _setFret(course, level),
+        onPointerUp: (_) { if (_fretLevel[course] == level) _setFret(course, 0); },
+        onPointerCancel: (_) { if (_fretLevel[course] == level) _setFret(course, 0); },
         child: Container(
           decoration: BoxDecoration(
-            color: on ? const Color(0xEAFFF7E6) : const Color(0x1FFFF6E4),
-            borderRadius: BorderRadius.circular(16),
+            color: on ? const Color(0xFFFFF7E6) : const Color(0xF2F7EAD2),
+            borderRadius: BorderRadius.circular(15),
             border: Border.all(color: on ? Colors.white : const Color(0x66FFF6E4), width: 1.5),
-            boxShadow: on ? const [BoxShadow(color: Color(0x29FFF7E6), spreadRadius: 5)] : null,
+            boxShadow: on
+                ? const [BoxShadow(color: Color(0x40FFF7E6), blurRadius: 14, spreadRadius: 3)]
+                : const [BoxShadow(color: Color(0x33000000), blurRadius: 8, offset: Offset(0, 3))],
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 22),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(l, style: TextStyle(fontSize: 14, letterSpacing: 0.5, color: on ? const Color(0xFF6A4408) : const Color(0xD9FFF6E4))),
-              Text(r, style: TextStyle(fontSize: 14, letterSpacing: 0.5, color: on ? const Color(0xFF6A4408) : const Color(0xD9FFF6E4))),
-            ],
-          ),
+          alignment: Alignment.center,
+          child: Text(note,
+              style: const TextStyle(color: Color(0xFF6A4408), fontSize: 24, fontWeight: FontWeight.w600, height: 1)),
         ),
       ),
     );
   }
 
-  Widget _label(double w, double h, String text, double frac) {
+  Widget _openLabel(double w, double h, String course, String sub, double cx) {
     return Positioned(
-      left: w * frac - 8, top: h * 0.49 - 8,
-      child: Text(text, style: const TextStyle(color: Color(0x8CFFF6E4), fontSize: 12)),
+      left: w * cx - 45,
+      top: h * 0.045,
+      width: 90,
+      child: Column(
+        children: [
+          Text(course,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xECFFF6E4), fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+          const SizedBox(height: 2),
+          Text(sub, textAlign: TextAlign.center, style: const TextStyle(color: Color(0x8CFFF6E4), fontSize: 10)),
+        ],
+      ),
+    );
+  }
+
+  Widget _droneTag(double w, double h, double cx, double topFrac) {
+    return Positioned(
+      left: w * cx - 45,
+      top: h * topFrac,
+      width: 90,
+      child: const Text('fretless\ndrone',
+          textAlign: TextAlign.center, style: TextStyle(color: Color(0x8CFFF6E4), fontSize: 11, height: 1.3)),
     );
   }
 }
