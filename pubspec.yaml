@@ -1,4 +1,4 @@
-name: dramnyen_tuner
+name: dranyen
 description: "A professional listening tuner for the dramnyen, the Tibetan lute. A project of the Terma Heritage Foundation."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.

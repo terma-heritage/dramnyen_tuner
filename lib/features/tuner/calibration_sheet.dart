@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:dramnyen_tuner/features/tuner/tuner_controller.dart';
+import 'package:dranyen/features/tuner/tuner_controller.dart';
 
 const _surface = Color(0xFF181A22);
 const _ink = Color(0xFFE8E6E1);

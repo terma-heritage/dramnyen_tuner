@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:dramnyen_tuner/shared/notes.dart';
-import 'package:dramnyen_tuner/shared/pitch/one_euro_filter.dart';
-import 'package:dramnyen_tuner/shared/pitch/pitch_detector.dart';
-import 'package:dramnyen_tuner/features/tuner/tuner_engine.dart';
+import 'package:dranyen/shared/notes.dart';
+import 'package:dranyen/shared/pitch/one_euro_filter.dart';
+import 'package:dranyen/shared/pitch/pitch_detector.dart';
+import 'package:dranyen/features/tuner/tuner_engine.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const sr = 48000.0;

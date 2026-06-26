@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:dramnyen_tuner/features/learn/learn_article_page.dart';
-import 'package:dramnyen_tuner/features/learn/learn_content.dart';
+import 'package:dranyen/features/learn/learn_article_page.dart';
+import 'package:dranyen/features/learn/learn_content.dart';
 
 const _amber = Color(0xFFF0A93C);
 const _muted = Color(0xFF9AA0AB);

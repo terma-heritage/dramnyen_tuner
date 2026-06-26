@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:dramnyen_tuner/features/tuner/tuner_screen.dart';
+import 'package:dranyen/features/tuner/tuner_screen.dart';
 
 /// Root app + theme. The tuner is the home screen for now; when more features
 /// (player, learn, record) graduate from behind their flags, a home hub can

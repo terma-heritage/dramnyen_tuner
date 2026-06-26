@@ -6,8 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:record/record.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
-import 'package:dramnyen_tuner/shared/notes.dart';
-import 'package:dramnyen_tuner/features/tuner/tuner_engine.dart';
+import 'package:dranyen/shared/notes.dart';
+import 'package:dranyen/features/tuner/tuner_engine.dart';
 
 /// Drives the tuner: streams mic PCM, runs the engine on overlapping windows,
 /// and exposes the latest reading to the UI.

@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:dramnyen_tuner/shared/notes.dart';
-import 'package:dramnyen_tuner/shared/pitch/one_euro_filter.dart';
-import 'package:dramnyen_tuner/shared/pitch/pitch_detector.dart';
+import 'package:dranyen/shared/notes.dart';
+import 'package:dranyen/shared/pitch/one_euro_filter.dart';
+import 'package:dranyen/shared/pitch/pitch_detector.dart';
 
 /// A single tuner reading, ready for the UI.
 class TunerReading {

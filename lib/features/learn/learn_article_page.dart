@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:dramnyen_tuner/features/learn/learn_content.dart';
+import 'package:dranyen/features/learn/learn_content.dart';
 
 const _amber = Color(0xFFF0A93C);
 const _ink = Color(0xFFE8EAED);
