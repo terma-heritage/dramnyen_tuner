@@ -116,6 +116,12 @@ class _TunerScreenState extends State<TunerScreen> with SingleTickerProviderStat
                   ),
                   const SizedBox(height: 10),
                   _status(r, color),
+                  if (!_c.listening) ...[
+                    const SizedBox(height: 6),
+                    Text('Then tap La · Re · So to tune your dranyen',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.spaceGrotesk(color: _muted, fontSize: 12, letterSpacing: 0.2)),
+                  ],
                   const Spacer(flex: 2),
                   Text('Tibetan Standard Tuning',
                       textAlign: TextAlign.center,
@@ -137,27 +143,7 @@ class _TunerScreenState extends State<TunerScreen> with SingleTickerProviderStat
           },
             ),
           ),
-          Positioned(right: 8, bottom: 6, child: _easterDot(context)),
         ],
-      ),
-    );
-  }
-
-  // Quiet entry point to the in-progress dranyen player (easter egg).
-  Widget _easterDot(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => const DranyenPlayerScreen())),
-      child: Container(
-        width: 28,
-        height: 28,
-        alignment: Alignment.center,
-        child: Container(
-          width: 9,
-          height: 9,
-          decoration: BoxDecoration(color: _amber.withValues(alpha: 0.35), shape: BoxShape.circle),
-        ),
       ),
     );
   }
@@ -205,6 +191,12 @@ class _TunerScreenState extends State<TunerScreen> with SingleTickerProviderStat
             onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LearnScreen())),
             behavior: HitTestBehavior.opaque,
             child: const Icon(Icons.menu_book_outlined, size: 19, color: _muted),
+          ),
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DranyenPlayerScreen())),
+            behavior: HitTestBehavior.opaque,
+            child: const Icon(Icons.music_note_outlined, size: 19, color: _muted),
           ),
           const SizedBox(width: 12),
           GestureDetector(

@@ -3,8 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 
-/// Hidden, in-progress playable dranyen. Reached from the easter-egg dot on the
-/// tuner screen. Three courses (La · Re · So); two fret bars lift La/Re to
+/// Playable dranyen. Reached from the music-note icon on the tuner screen.
+/// Three courses (La · Re · So); two fret bars lift La/Re to
 /// ti/mi (×200¢) and do/fa (×300¢); So is a fretless drone. Strum-required —
 /// fretting a ringing string bends its pitch live (subtle glide). Open samples
 /// are Tenzin Norbu's recordings; fretted notes are pitch-shifted from the open
